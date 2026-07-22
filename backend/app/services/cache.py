@@ -17,6 +17,10 @@ async def get_revenue_summary(
     When month/year are provided, returns revenue for that specific month
     instead of the all-time total.
     """
+    # tenant_id must be part of the key: property ids are not unique across
+    # tenants (two different tenants can both have a "prop-001"), so a key of
+    # just property_id would let one tenant be served another tenant's cached
+    # revenue.
     if month and year:
         cache_key = f"revenue:{tenant_id}:{property_id}:{year}:{month:02d}"
     else:

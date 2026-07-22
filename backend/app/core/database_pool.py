@@ -14,11 +14,16 @@ class DatabasePool:
     async def initialize(self):
         """Initialize database connection pool"""
         try:
-            # Create async engine with connection pooling
+            # Build the async connection string from the actual database_url setting.
+            # This previously referenced settings.supabase_db_user/host/port/name,
+            # which do not exist on Settings, so this always raised AttributeError
+            # and every caller silently fell back to hardcoded mock data.
             database_url = settings.database_url
             if database_url.startswith("postgresql://"):
                 database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-            
+
+            # No explicit poolclass: QueuePool (the previous value here) is a sync
+            # pool and is not compatible with an async engine.
             self.engine = create_async_engine(
                 database_url,
                 pool_size=20,  # Number of connections to maintain
@@ -48,7 +53,10 @@ class DatabasePool:
     
     @asynccontextmanager
     async def get_session(self):
-        """Get database session from pool as an async context manager"""
+        """Get database session from pool as an async context manager.
+        Must stay decorated with asynccontextmanager: callers use
+        "async with db_pool.get_session() as session", which requires this
+        call to return a context manager, not a bare coroutine."""
         if not self.session_factory:
             raise Exception("Database pool not initialized")
         async with self.session_factory() as session:

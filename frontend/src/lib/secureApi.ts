@@ -1468,6 +1468,13 @@ export class SecureAPIClient {
     return this.request<any>(`/api/v1/dashboard/summary?${queryParams}`, requestOptions);
   }
 
+  /**
+   * Get properties belonging to the current user's tenant
+   */
+  async getProperties() {
+    return this.request<any>('/api/v1/properties');
+  }
+
   async uploadCompanyLogo(logo_url: string) {
     return this.request<any>('/api/v1/company-settings/logo', {
       method: 'POST',
